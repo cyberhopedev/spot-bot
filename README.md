@@ -22,6 +22,7 @@ Discord bot to scan spotify links in a channel and add them to a playlist when t
 
 ## Environment Variables
 
+| Variable | Description |
 |---|---|
 | `SPOTIFY_CLIENT_ID` | Client ID from the Spotify Developer Dashboard |
 | `SPOTIFY_CLIENT_SECRET` | Client Secret from the Spotify Developer Dashboard |
