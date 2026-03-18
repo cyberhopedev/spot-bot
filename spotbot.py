@@ -15,13 +15,33 @@ PyTest documentation: https://pypi.org/project/pytest/
 #=============================================================================
 
 """
+import re
+from urllib.parse import urlparse
 import spotipy
 import discord
+from spotipy.oauth2 import SpotifyOAuth
+
+# Pattern breakdown:
+#   https://open\.spotify\.com/track/  — literal URL prefix (. is escaped
+#                                         so it matches a dot, not any char)
+#   [A-Za-z0-9]+                       — one or more alphanumeric characters
+#                                         (the track ID itself)
+SPOTIFY_TRACK_PATTERN = re.compile(r"https://open\.spotify\.com/track/[A-Za-z0-9]+")
+
+# Emojis used for adding or not adding the song to the playlist
+CONFIRM_EMOJI = "✅"
+DENY_EMOJI    = "❌"
+
+# Timeout seconds so the bot wont hang for user to react
+REACTION_TIMEOUT = 60
 
 class SpotBot(discord.Client):
     """
     A Discord bot that reads messages from a specific channel. If that message has
     a Spotify link, it will add it to a specified Spotify playlist.
+
+    Inherits from discord.Client, which is the base class for all Discord bots in discord.py. 
+    By inheriting it, we get all the connection logic for free and just override the event methods we care about.
     """
 
     def __init__(self, spotify_client_id, spotify_client_secret, spotify_redirect_uri, spotify_playlist_id, discord_token, discord_channel_id):
@@ -39,7 +59,25 @@ class SpotBot(discord.Client):
         Returns:
             None
         """
-        pass
+        # Discord intents that communicate which events Spotbot wants
+        intents = discord.Intents.default()
+        super().__init__(intents=intents)
+
+        # Stores credentials so we can use them later
+        self.discord_token = discord_token
+        self.discord_channel_id  = discord_channel_id
+        self.spotify_playlist_id = spotify_playlist_id
+
+        # Spotify OAuth
+        auth_manager = SpotifyOAuth(
+            client_id=spotify_client_id,
+            client_secret=spotify_client_secret,
+            redirect_uri=spotify_redirect_uri,
+            scope="playlist-modify-public playlist-modify-private",
+        )
+
+        # Create the Spotipy client using the auth manager
+        self.sp = spotipy.Spotify(auth_manager=auth_manager)
 
     def on_music_recs_message(self, message):
         """
