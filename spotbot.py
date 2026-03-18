@@ -11,6 +11,7 @@ Discord.py documentation: https://discordpy.readthedocs.io/en/stable/
 Spotipy documentation: https://spotipy.readthedocs.io/en/2.19.0/
 Spotify Developer: https://developer.spotify.com/
 Discord Developer: https://discord.com/developers/applications
+PyTest documentation: https://pypi.org/project/pytest/ 
 #=============================================================================
 
 """
@@ -22,7 +23,7 @@ class SpotBot(discord.Client):
     A Discord bot that reads messages from a specific channel. If that message has
     a Spotify link, it will add it to a specified Spotify playlist.
     """
-    
+
     def __init__(self, spotify_client_id, spotify_client_secret, spotify_redirect_uri, spotify_playlist_id, discord_token, discord_channel_id):
         """
         Initializes the SpotBot with the necessary credentials and configuration for

@@ -10,6 +10,7 @@ Discord.py documentation: https://discordpy.readthedocs.io/en/stable/
 Spotipy documentation: https://spotipy.readthedocs.io/en/2.19.0/
 Spotify Developer: https://developer.spotify.com/
 Discord Developer: https://discord.com/developers/applications
+PyTest documentation: https://pypi.org/project/pytest/ 
 #=============================================================================
 
 """
@@ -29,7 +30,7 @@ def main():
     Returns:
         None
     """
-    pass
+    
 
 if __name__ == "__main__":
     main()
