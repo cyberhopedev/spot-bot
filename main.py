@@ -1,3 +1,22 @@
+"""
+    Author:  cyberhopedev
+    Date:    March 2026
+
+    Program:  SpotBot (Entry Point)
+    Purpose:  Loads credentials from the environment and starts the SpotBot.
+
+#== ACKNOWLEDGEMENTS =========================================================
+Discord.py documentation: https://discordpy.readthedocs.io/en/stable/
+Spotipy documentation: https://spotipy.readthedocs.io/en/2.19.0/
+Spotify Developer: https://developer.spotify.com/
+Discord Developer: https://discord.com/developers/applications
+#=============================================================================
+
+"""
+import os
+from dotenv import load_dotenv
+from spotbot import SpotBot
+
 def main():
     """
     Entry point for the SpotBot application. Reads credentials and configuration
