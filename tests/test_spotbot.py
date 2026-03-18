@@ -20,7 +20,20 @@ from unittest.mock import MagicMock, AsyncMock, patch
 @pytest.fixture
 def bot():
     """
-    Creates a SpotBot instance with all external clients mocked out.
+    Creates a SpotBot instance with all external clients mocked out so no
+    real network calls are made during tests.
+    """
+    pass
+@pytest.fixture
+def mock_message():
+    """
+    Builds a fake discord.Message object with the attributes SpotBot reads:
+      - content       : the text of the message
+      - author        : the user who sent it (has .mention for the @ping)
+      - channel       : the channel it was sent in (has an async .send())
+      - channel.id    : set to match the bot's monitored channel ID
+
+    All send/async operations are AsyncMock so they can be awaited in tests.
     """
     pass
 
@@ -59,9 +72,37 @@ async def test_non_spotify_message_is_ignored(bot):
     """
     pass
 @pytest.mark.asyncio
-async def test_spotify_link_sends_confirmation_dm(bot):
+async def test_spotify_link_sends_confirmation(bot):
     """
-    Test using a Discord message containing a Spotify link of a song.
+    Tests valid Spotify track link triggers a confirmation prompt in the
+    channel that mentions the user and includes both emoji reactions.
     """
     pass
+
+async def test_confirm_reaction_adds_song_and_notifies_channel(bot, mock_message):
+    """
+    Tests that when reacting with  ✅ should add the track to the playlist and send a
+    success message in the channel.
+    """
+    pass
+
+async def test_deny_reaction_does_not_add_song(bot, mock_message):
+    """
+    Tests that when reacting with ❌ the track should NOT be added to the playlist and should
+    send a cancellation message in the channel.
+    """
+    pass
+
+async def test_timeout_does_not_add_song(bot, mock_message):
+    """
+    Tests that if the user doesn't react within REACTION_TIMEOUT seconds, the track
+    should NOT be added and a timeout message should appear in the channel.
+    """
+    pass
+
+async def test_spotify_api_error_sends_channel_error_message(bot, mock_message):
+    """
+    Tests that the Spotify API fails when fetching track info, an error message
+    should be posted in the channel and no prompt should be sent.
+    """
 
