@@ -23,7 +23,24 @@ def bot():
     Creates a SpotBot instance with all external clients mocked out so no
     real network calls are made during tests.
     """
-    pass
+
+    #  patch() replaces the named object for the duration of the 'with' block
+    with patch("spotbot.SpotifyOAuth"), patch("spotbot.spotipy.Spotify"):
+        from spotbot import SpotBot
+
+        instance = SpotBot(
+            spotify_client_id     = "fake_id",
+            spotify_client_secret = "fake_secret",
+            spotify_redirect_uri  = "http://localhost:8888/callback",
+            spotify_playlist_id   = "fake_playlist_id",
+            discord_token         = "fake_discord_token",
+            discord_channel_id    = 123456789,
+        )
+
+        # Replace self.sp with a plain MagicMock so every Spotify API call returns a controllable fake value
+        instance.sp = MagicMock()
+        return instance
+    
 @pytest.fixture
 def mock_message():
     """
@@ -35,7 +52,18 @@ def mock_message():
 
     All send/async operations are AsyncMock so they can be awaited in tests.
     """
-    pass
+    message = MagicMock()
+
+    # channel.id must match bot.discord_channel_id (123456789) for on_message to forward the message to on_music_recs_message
+    message.channel.id   = 123456789
+
+    # channel.send is async — it needs AsyncMock so it can be awaited and so we can inspect calls to it with .assert_called() etc
+    message.channel.send = AsyncMock()
+
+    # author.mention is what Discord uses for @username pings in messages
+    message.author.mention = "@testuser"
+
+    return message
 
 def test_get_song_id_from_url(bot):
     """
