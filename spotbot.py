@@ -161,3 +161,28 @@ class SpotBot(discord.Client):
             ValueError: If the URL is not a recognizable Spotify user URL.
         """
         pass
+
+    def _extract_id_from_url(self, url, resource_type):
+        """
+        Shared helper that parses any Spotify URL and extracts the ID for the
+        given resource type. The leading underscore in the name is a Python
+        convention indicating this is an internal method not intended to be
+        called from outside the class.
+
+        Parameter(s):
+            url (str): A full Spotify URL.
+            resource_type (str): One of 'track', 'playlist', or 'user'.
+        Returns:
+            str: The extracted Spotify resource ID.
+        Raises:
+            ValueError: If the URL structure does not match the expected pattern.
+        """
+        parsed_url = urlparse(url)
+        tokens = parsed_url.path.strip("/").split("/")
+
+        
+        # Check that the path has at least two segments and the first matches the expected type of track/playlist/user/etc.
+        if len(tokens) >= 2 and tokens[0] == resource_type:
+            return tokens[1]
+        # Otherwise, if it doesn't, raise a ValueError
+        raise ValueError(f"Could not extract {resource_type} ID from URL: {url}")
