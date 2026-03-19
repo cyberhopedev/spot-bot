@@ -61,6 +61,9 @@ class SpotBot(discord.Client):
         """
         # Discord intents that communicate which events Spotbot wants
         intents = discord.Intents.default()
+        # Ensure that message content and reactions are within the intents
+        intents.message_content = True
+        intents.reactions = True
         super().__init__(intents=intents)
 
         # Stores credentials so we can use them later
@@ -79,19 +82,57 @@ class SpotBot(discord.Client):
         # Create the Spotipy client using the auth manager
         self.sp = spotipy.Spotify(auth_manager=auth_manager)
 
-    def on_music_recs_message(self, message):
+    async def on_ready(self):
         """
-        Event handler for when a message is sent in the monitored Discord channel. 
-        If the message contains a Spotify link, it will add the corresponding song 
-        to the specified Spotify playlist.
+        Called automatically by discord.py once the bot has finished connecting
+        to Discord and is ready to receive events.
+        Prints a confirmation message to the console.
+        Parameter(s):
+            None
+        Returns:
+            None
+        """
+        print(f"Logged in as {self.user} (ID: {self.user.id})")
+        print(f"Monitoring channel ID: {self.discord_channel_id}")
+
+    async def on_message(self, message):
+        """
+        Discord event handler called automatically every time a message is sent
+        in any channel the bot can see. Ignores messages from the bot itself,
+        then delegates to on_music_recs_message if the message is in the
+        monitored channel.
 
         Parameter(s):
-            message (discord.Message): The message object representing the message sent in the Discord channel.
+            message (discord.Message): The Discord message object.
+        Returns:
+            None
+        """
+        # If I am the author, ignore me
+        if message.author == self.user:
+            return
+        # Otherwise, if I am in the expected channel run then wait for on_music_recs_message to finish before continuing
+        if message.channel.id == self.discord_channel_id:
+            await self.on_music_recs_message(message)
+
+
+    def on_music_recs_message(self, message):
+        """
+        Called when a message is posted in the monitored channel (music-recs).
+
+        If the message contains a Spotify track URL, retrieves the track's name
+        and artist from Spotify and sends a message in the same channel asking
+        the user to confirm adding it to the playlist by reacting with ✅ or ❌.
+
+        Waits up to REACTION_TIMEOUT seconds for a reaction. If the user reacts
+        with ✅ the track is added and a follow-up channel message is sent. If the
+        user reacts with ❌ or the timeout expires, a cancellation message is sent.
+
+        Parameter(s):
+            message (discord.Message): The Discord message object to inspect.
         Returns:
             None
         Raises:
-            spotipy.SpotifyException: If the Spotify API call fails (e.g. bad token,
-            track not found, insufficient permissions on the playlist).
+            spotipy.SpotifyException: If the Spotify API call fails.
         """
         pass
 

@@ -98,7 +98,10 @@ async def test_non_spotify_message_is_ignored(bot):
     Test using a normal Discord message, messages without a Spotify link 
     should do nothing.
     """
-    pass
+    mock_message.content = "theyre my fav emo band rn"
+    await bot.on_music_recs_message(mock_message)
+    mock_message.channel.send.assert_not_called()
+    
 @pytest.mark.asyncio
 async def test_spotify_link_sends_confirmation(bot):
     """
