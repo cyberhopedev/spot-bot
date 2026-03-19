@@ -60,6 +60,7 @@ def main():
     )
 
     # Start the bot using discord token
+    print("Starting SpotBot...")
     bot.run(bot.discord_token)
 
 if __name__ == "__main__":
