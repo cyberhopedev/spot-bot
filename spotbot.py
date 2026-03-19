@@ -87,8 +87,13 @@ class SpotBot(discord.Client):
         Called automatically by discord.py once the bot has finished connecting
         to Discord and is ready to receive events.
         Prints a confirmation message to the console.
+        Parameter(s):
+            None
+        Returns:
+            None
         """
-        pass
+        print(f"Logged in as {self.user} (ID: {self.user.id})")
+        print(f"Monitoring channel ID: {self.discord_channel_id}")
 
     async def on_message(self, message):
         """
@@ -102,7 +107,13 @@ class SpotBot(discord.Client):
         Returns:
             None
         """
-        pass
+        # If I am the author, ignore me
+        if message.author == self.user:
+            return
+        # Otherwise, if I am in the expected channel run then wait for on_music_recs_message to finish before continuing
+        if message.channel.id == self.discord_channel_id:
+            await self.on_music_recs_message(message)
+
 
     def on_music_recs_message(self, message):
         """
