@@ -106,28 +106,37 @@ def test_get_song_id_invalid_url_raises(bot):
 
 def test_add_song_to_playlist_calls_api(bot):
     """
-    Test adding the song to a playlist
+    Test adding the song to the correct playlist initialized in __init__
     """
-    pass
+    # Add the song
+    bot.add_song_to_playlist("https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC")
+
+    # Make sure the expected playlist was called when adding
+    bot.sp.playlist_add_items.assert_called_once_with(
+        "fake_playlist_id", ["4uLU6hMCjMI75M1A2tKUQC"]
+    )
 
 @pytest.mark.asyncio
-async def test_non_spotify_message_is_ignored(bot):
+async def test_non_spotify_message_is_ignored(bot, mock_message):
     """
     Test using a normal Discord message, messages without a Spotify link 
     should do nothing.
     """
     mock_message.content = "theyre my fav emo band rn"
     await bot.on_music_recs_message(mock_message)
+
+    # Bot should not send anything in this case
     mock_message.channel.send.assert_not_called()
     
 @pytest.mark.asyncio
-async def test_spotify_link_sends_confirmation(bot):
+async def test_spotify_link_sends_confirmation(bot, mock_message):
     """
     Tests valid Spotify track link triggers a confirmation prompt in the
     channel that mentions the user and includes both emoji reactions.
     """
     pass
 
+@pytest.mark.asyncio
 async def test_confirm_reaction_adds_song_and_notifies_channel(bot, mock_message):
     """
     Tests that when reacting with  ✅ should add the track to the playlist and send a
@@ -135,6 +144,7 @@ async def test_confirm_reaction_adds_song_and_notifies_channel(bot, mock_message
     """
     pass
 
+@pytest.mark.asyncio
 async def test_deny_reaction_does_not_add_song(bot, mock_message):
     """
     Tests that when reacting with ❌ the track should NOT be added to the playlist and should
@@ -142,6 +152,7 @@ async def test_deny_reaction_does_not_add_song(bot, mock_message):
     """
     pass
 
+@pytest.mark.asyncio
 async def test_timeout_does_not_add_song(bot, mock_message):
     """
     Tests that if the user doesn't react within REACTION_TIMEOUT seconds, the track
@@ -149,9 +160,10 @@ async def test_timeout_does_not_add_song(bot, mock_message):
     """
     pass
 
+@pytest.mark.asyncio
 async def test_spotify_api_error_sends_channel_error_message(bot, mock_message):
     """
     Tests that the Spotify API fails when fetching track info, an error message
     should be posted in the channel and no prompt should be sent.
     """
-
+    pass
