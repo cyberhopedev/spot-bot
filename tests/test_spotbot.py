@@ -69,21 +69,39 @@ def test_get_song_id_from_url(bot):
     """
     Test getting the song ID from the URL
     """
-    pass
+    # Test with query params
+    url = "https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC?si=abc123"
+    assert bot.get_song_id_from_url(url) == "4uLU6hMCjMI75M1A2tKUQC"
+
+    # Test without query params
+    url = "https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC"
+    assert bot.get_song_id_from_url(url) == "4uLU6hMCjMI75M1A2tKUQC"
+
 def test_get_playlist_id_from_url(bot):
     """
     Test getting the playlist ID from the URL
     """
-    pass
+    url = "https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M"
+    assert bot.get_playlist_id_from_url(url) == "37i9dQZF1DXcBWIGoYBM5M"
+
 def test_get_user_id_from_url(bot):
     """
     Test getting the user ID from the URL
     """
-    pass
+    url = "https://open.spotify.com/user/spotifyuser123"
+    assert bot.get_user_id_from_url(url) == "spotifyuser123"
+
 def test_get_song_id_invalid_url_raises(bot):
     """
     Test getting the song ID from an invalid URL
     """
+    # Incorrect resource type
+    with pytest.raises(ValueError):
+        bot.get_song_id_from_url("https://open.spotify.com/playlist/wrongtype")
+        
+    # General incorrect URL
+    with pytest.raises(ValueError):
+        bot.get_song_id_from_url("https://not-spotify.com/something/abc123")
 
 
 def test_add_song_to_playlist_calls_api(bot):
