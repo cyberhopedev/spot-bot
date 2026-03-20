@@ -134,7 +134,7 @@ class SpotBot(discord.Client):
         """
         pass
 
-    def on_music_recs_message(self, message):
+    async def on_music_recs_message(self, message):
         """
         Called when a message is posted in the monitored channel (music-recs).
 
@@ -153,7 +153,55 @@ class SpotBot(discord.Client):
         Raises:
             spotipy.SpotifyException: If the Spotify API call fails.
         """
-        pass
+        # Find the track pattern using regex
+        match = SPOTIFY_TRACK_PATTERN.search(message.content)
+        if not match:
+            return # No Spotify link found, stop here
+        
+        # Get the full text that matched the pattern, AKA complete Spotify track URL, then get just the track ID
+        song_url = match.group(0)
+        track_id = self.get_song_id_from_url
+
+        # Fetch the track and playlist info from Spotify
+        try:
+            # Extract the name and list of artists
+            track_info = self.sp.track(track_id)
+            track_name = track_info["name"]
+
+            # Extract the artist names into a comma list
+            artist_names = ", ".join(a["name"] for a in track_info["artists"])
+
+            # Fetch metadata about the target playlist
+            playlist_info = self.sp.playlist(self.spotify_playlist_id, fields="name")
+            playlist_name = playlist_info["name"]
+        except Exception as e:
+            # An error occured :(, print an error to console and post a message to channel
+            print(f"Failed to fetch track/playlist info: {e}")
+            await message.channel.send(
+                "⚠️ SpotBot couldn't retrieve that track's details from Spotify. "
+                "Please check the link and try again."
+            )
+            return
+        
+        # Post the confirmation prompt in the channel
+        prompt = await message.channel.send(
+            f'{message.author.mention} 🎵 **{track_name}** — {artist_names}\n\n'
+            f'Would you like to add this to **{playlist_name}**?\n\n'
+            f'React with {CONFIRM_EMOJI} to add it, or {DENY_EMOJI} to cancel.'
+        )
+        # Pre-add reactions
+        await prompt.add_reaction(CONFIRM_EMOJI)
+        await prompt.add_reaction(DENY_EMOJI)
+
+        # Store the pending confirmation so it can be added/denied whenever a choice is made
+        self.pending[prompt.id] = {
+            "song_url":      song_url,
+            "track_name":    track_name,
+            "artist_names":  artist_names,
+            "playlist_name": playlist_name,
+            "author_id":     message.author.id,
+            "channel_id":    message.channel.id,
+        }
 
     # =============================================================================
     # Helper methods

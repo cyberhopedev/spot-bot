@@ -161,7 +161,42 @@ async def test_spotify_link_sends_confirmation(bot, mock_message):
     Tests valid Spotify track link triggers a confirmation prompt in the
     channel that mentions the user and includes both emoji reactions.
     """
-    pass
+    mock_message.content = "https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC"
+
+    # Configure the fake Spotify API to return believable track/playlist data.
+    # return_value sets what the mock returns when called.
+    bot.sp.track.return_value = {
+        "name": "Creep",
+        "artists": [{"name": "Radiohead"}]
+    }
+    bot.sp.playlist.return_value = {"name": "My Playlist"}
+
+    # Build a fake prompt message that channel.send() will return.
+    prompt = MagicMock()
+    prompt.id = 999
+    prompt.add_reaction = AsyncMock()
+    mock_message.channel.send = AsyncMock(return_value=prompt)
+
+    await bot.on_music_recs_message(mock_message)
+
+    # channel.send should have been called once for the prompt.
+    mock_message.channel.send.assert_called_once()
+
+    # The prompt text should @mention the user.
+    prompt_text = mock_message.channel.send.call_args.args[0]
+    assert "@testuser" in prompt_text
+
+    # Both ✅ and ❌ must have been added as reactions so the user can click them.
+    reaction_calls = [call.args[0] for call in prompt.add_reaction.call_args_list]
+    assert "✅" in reaction_calls
+    assert "❌" in reaction_calls
+
+    # The prompt ID should now be in self.pending with the correct metadata.
+    assert 999 in bot.pending
+    assert bot.pending[999]["song_url"] == "https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC"
+    assert bot.pending[999]["track_name"] == "Creep"
+    assert bot.pending[999]["author_id"] == mock_message.author.id
+
 
 @pytest.mark.asyncio
 async def test_non_spotify_message_is_ignored(bot, mock_message):
@@ -178,7 +213,7 @@ async def test_non_spotify_message_is_ignored(bot, mock_message):
 # =============================================================================
 # on_raw_reaction_add Tests
 # =============================================================================
-def seed_pending(bot, prompt_id=999, author_id=111, channel_id=123456789):
+def seed_pending(bot, prompt_id=999, channel_id=123456789):
     """
     Helper that inserts a fake pending entry into bot.pending so tests
     don't need to go through on_music_recs_message first.
@@ -194,7 +229,7 @@ def seed_pending(bot, prompt_id=999, author_id=111, channel_id=123456789):
         "track_name":    "Creep",
         "artist_names":  "Radiohead",
         "playlist_name": "My Playlist",
-        "author_id":     author_id,
+        "author_id":    111,
         "channel_id":    channel_id,
     }
 
@@ -204,7 +239,7 @@ async def test_confirm_reaction_adds_song_and_notifies_channel(bot, mock_message
     Tests that when reacting with  ✅ should add the track to the playlist and send a
     success message in the channel.
     """
-    seed_pending(bot, prompt_id=999, author_id=111)
+    seed_pending(bot, prompt_id=999)
 
     bot.user = MagicMock()
     bot.user.id = 999999
@@ -239,7 +274,7 @@ async def test_deny_reaction_does_not_add_song(bot, mock_message):
     Tests that when reacting with ❌ the track should NOT be added to the playlist and should
     send a cancellation message in the channel.
     """
-    seed_pending(bot, prompt_id=999, author_id=111)
+    seed_pending(bot, prompt_id=999)
 
     bot.user = MagicMock()
     bot.user.id = 999999
@@ -270,7 +305,7 @@ async def test_bot_own_reaction_is_ignored(bot):
     The bot reacts with ✅ and ❌ itself when posting a prompt.
     Those self-reactions must not trigger a confirmation.
     """
-    seed_pending(bot, prompt_id=999, author_id=111)
+    seed_pending(bot, prompt_id=999)
 
     # Set the bot's own user ID and react as the bot.
     bot.user = MagicMock()
@@ -290,7 +325,7 @@ async def test_unknown_emoji_is_ignored(bot):
     A reaction with an emoji other than ✅ or ❌ should be silently ignored.
     The entry should remain in pending untouched.
     """
-    seed_pending(bot, prompt_id=999, author_id=111)
+    seed_pending(bot, prompt_id=999)
 
     bot.user = MagicMock()
     bot.user.id = 999999
@@ -303,6 +338,33 @@ async def test_unknown_emoji_is_ignored(bot):
     # Entry should still be in pending, unrecognised emoji is ignored.
     assert 999 in bot.pending
     bot.get_channel.assert_not_called()
+
+@pytest.mark.asyncio
+async def test_reaction_from_any_user_is_accepted(bot):
+    """
+    Any user in the channel can confirm or cancel — not just the original poster.
+    A ✅ from a different user (222, not the poster 111) should still add the track.
+    """
+    seed_pending(bot, prompt_id=999)
+
+    bot.user = MagicMock()
+    bot.user.id = 999999
+
+    channel = MagicMock()
+    channel.send = AsyncMock()
+    bot.get_channel = MagicMock(return_value=channel)
+
+    # React as a different user (222) — should still be accepted.
+    payload = make_payload(message_id=999, user_id=222, emoji="✅")
+
+    await bot.on_raw_reaction_add(payload)
+
+    # Track should have been added even though user 222 didn't post the link.
+    bot.sp.playlist_add_items.assert_called_once_with(
+        "fake_playlist_id", ["4uLU6hMCjMI75M1A2tKUQC"]
+    )
+    assert 999 not in bot.pending
+
 
 @pytest.mark.asyncio
 async def test_confirm_reaction_cannot_fire_twice(bot):
