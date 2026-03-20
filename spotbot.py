@@ -132,7 +132,47 @@ class SpotBot(discord.Client):
         Raises:
             spotipy.SpotifyException: If the Spotify API call to add the track fails.
         """
-        pass
+        # Lookup tracks that are pending confirmation, if not stop here
+        if payload.message_id not in self.pending:
+            return
+        # Ignore the bot's own reactions
+        if payload.user_id == self.user.id:
+            return
+        # Now get the entry and ensure only ✅ and ❌ emoji, otherwise return
+        entry = self.pending[payload.message_id]
+        emoji = str(payload.emoji)
+        if emoji not in (CONFIRM_EMOJI, DENY_EMOJI):
+            return
+
+        # Passed all conditions, we can delete it from pending
+        del self.pending[payload.message_id]
+        # Get the channel ID so we know where to send the follow-up confirmation msg
+        channel = self.get_channel(payload.channel_id)
+        
+        # Handle the user's choice for this track
+        if emoji == CONFIRM_EMOJI:
+            # Try to add the track to the playlist.
+            try:
+                self.add_song_to_playlist(entry["song_url"])
+                await channel.send(
+                    f'✅ **{entry["track_name"]}** — {entry["artist_names"]} '
+                    f'has been added to **{entry["playlist_name"]}**!'
+                )
+                print(f'Added to playlist: {entry["track_name"]} ({entry["song_url"]})')
+            except Exception as e:
+                # The Spotify API call failed — notify the channel and log the error.
+                await channel.send(
+                    f'❌ Something went wrong adding **{entry["track_name"]}** '
+                    f'to **{entry["playlist_name"]}**. Please try again.'
+                )
+                print(f'Failed to add track {entry["song_url"]}: {e}')
+        else:
+            # Do nothing and let the channel know.
+            await channel.send(
+                f'❌ Got it, **{entry["track_name"]}** was **not** added '
+                f'to **{entry["playlist_name"]}**.'
+            )
+            print(f'User declined to add: {entry["track_name"]} ({entry["song_url"]})')
 
     async def on_music_recs_message(self, message):
         """

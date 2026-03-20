@@ -61,11 +61,14 @@ def mock_message():
     # channel.id must match bot.discord_channel_id (123456789) for on_message to forward the message to on_music_recs_message
     message.channel.id   = 123456789
 
-    # channel.send is async — it needs AsyncMock so it can be awaited and so we can inspect calls to it with .assert_called() etc
+    # channel.send is async, it needs AsyncMock so it can be awaited and so we can inspect calls to it with .assert_called() etc
     message.channel.send = AsyncMock()
 
     # author.mention is what Discord uses for @username pings in messages
     message.author.mention = "@testuser"
+
+    # author.id is the integer Discord user ID
+    message.author.id = 111
 
     return message
 
@@ -373,7 +376,7 @@ async def test_confirm_reaction_cannot_fire_twice(bot):
     a second ✅ reaction on the same message should do nothing — the track
     should not be added a second time.
     """
-    seed_pending(bot, prompt_id=999, author_id=111)
+    seed_pending(bot, prompt_id=999)
 
     bot.user = MagicMock()
     bot.user.id = 999999
@@ -441,7 +444,7 @@ async def test_spotify_api_error_on_confirm_sends_error(bot):
     an error message should be sent to the channel and pending should
     still be cleared.
     """
-    seed_pending(bot, prompt_id=999, author_id=111)
+    seed_pending(bot, prompt_id=999)
 
     bot.user = MagicMock()
     bot.user.id = 999999
