@@ -11,12 +11,16 @@ Spotipy documentation: https://spotipy.readthedocs.io/en/2.19.0/
 Spotify Developer: https://developer.spotify.com/
 Discord Developer: https://discord.com/developers/applications
 PyTest documentation: https://pypi.org/project/pytest/ 
-#=============================================================================
+#==============================================================================
 
 """
 import pytest
 from unittest.mock import MagicMock, AsyncMock, patch
 
+
+# =============================================================================
+# Fixtures
+# =============================================================================
 @pytest.fixture
 def bot():
     """
@@ -65,6 +69,9 @@ def mock_message():
 
     return message
 
+# =============================================================================
+# URL Parsing Tests
+# =============================================================================
 def test_get_song_id_from_url(bot):
     """
     Test getting the song ID from the URL
@@ -103,7 +110,9 @@ def test_get_song_id_invalid_url_raises(bot):
     with pytest.raises(ValueError):
         bot.get_song_id_from_url("https://not-spotify.com/something/abc123")
 
-
+# =============================================================================
+# add_song_to_playlist Tests
+# =============================================================================
 def test_add_song_to_playlist_calls_api(bot):
     """
     Test adding the song to the correct playlist initialized in __init__
@@ -116,6 +125,17 @@ def test_add_song_to_playlist_calls_api(bot):
         "fake_playlist_id", ["4uLU6hMCjMI75M1A2tKUQC"]
     )
 
+# =============================================================================
+# on_music_recs_message Tests
+# =============================================================================
+@pytest.mark.asyncio
+async def test_spotify_link_sends_confirmation(bot, mock_message):
+    """
+    Tests valid Spotify track link triggers a confirmation prompt in the
+    channel that mentions the user and includes both emoji reactions.
+    """
+    pass
+
 @pytest.mark.asyncio
 async def test_non_spotify_message_is_ignored(bot, mock_message):
     """
@@ -127,14 +147,29 @@ async def test_non_spotify_message_is_ignored(bot, mock_message):
 
     # Bot should not send anything in this case
     mock_message.channel.send.assert_not_called()
-    
-@pytest.mark.asyncio
-async def test_spotify_link_sends_confirmation(bot, mock_message):
+
+# =============================================================================
+# on_raw_reaction_add Tests
+# =============================================================================
+def seed_pending(bot, prompt_id=999, author_id=111, channel_id=123456789):
     """
-    Tests valid Spotify track link triggers a confirmation prompt in the
-    channel that mentions the user and includes both emoji reactions.
+    Helper that inserts a fake pending entry into bot.pending so tests
+    don't need to go through on_music_recs_message first.
+
+    Parameter(s):
+        bot        : The SpotBot fixture instance.
+        prompt_id  : The fake prompt message ID to key the entry on.
+        author_id  : The Discord user ID of the original poster.
+        channel_id : The Discord channel ID where the prompt lives.
     """
-    pass
+    bot.pending[prompt_id] = {
+        "song_url":      "https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC",
+        "track_name":    "Creep",
+        "artist_names":  "Radiohead",
+        "playlist_name": "My Playlist",
+        "author_id":     author_id,
+        "channel_id":    channel_id,
+    }
 
 @pytest.mark.asyncio
 async def test_confirm_reaction_adds_song_and_notifies_channel(bot, mock_message):
@@ -161,9 +196,57 @@ async def test_timeout_does_not_add_song(bot, mock_message):
     pass
 
 @pytest.mark.asyncio
+async def test_bot_own_reaction_is_ignored(bot):
+    """
+    The bot reacts with ✅ and ❌ itself when posting a prompt.
+    Those self-reactions must not trigger a confirmation.
+    """
+    pass
+
+@pytest.mark.asyncio
+async def test_unknown_emoji_is_ignored(bot):
+    """
+    A reaction with an emoji other than ✅ or ❌ should be silently ignored.
+    The entry should remain in pending untouched.
+    """
+    pass
+
+@pytest.mark.asyncio
+async def test_confirm_reaction_cannot_fire_twice(bot):
+    """
+    Once a ✅ reaction is handled and the entry is removed from pending,
+    a second ✅ reaction on the same message should do nothing — the track
+    should not be added a second time.
+    """
+    pass
+
+@pytest.mark.asyncio
 async def test_spotify_api_error_sends_channel_error_message(bot, mock_message):
     """
-    Tests that the Spotify API fails when fetching track info, an error message
+    Tests that if the Spotify API fails when fetching track info, an error message
     should be posted in the channel and no prompt should be sent.
+    """
+    # Initialize the mock Discord message
+    mock_message.content = "https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC i love this sm"
+
+    # Force an exception to simulate an actual Spotify API failute
+    bot.sp.track.side_effect = Exception("Spotify API error occured")
+    await bot.on_music_recs_message(mock_message)
+
+    # Only the error message should have been called with no prompt to add to a playlist
+    mock_message.channel.send.assert_called_once()
+    error_message = mock_message.channel.send.call_args.args[0]
+    assert "⚠️" in error_message
+    bot.sp.playlist_add_items.assert_not_called()
+
+    # Nothing should have been added to pending.
+    assert len(bot.pending) == 0
+
+@pytest.mark.asyncio
+async def test_spotify_api_error_on_confirm_sends_error(bot):
+    """
+    If the Spotify API fails when adding a track after ✅ is reacted,
+    an error message should be sent to the channel and pending should
+    still be cleared.
     """
     pass

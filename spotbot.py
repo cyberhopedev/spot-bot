@@ -4,7 +4,8 @@
 
     Program:  SpotBot
     Purpose:  A Discord bot that reads messages from a specific channel. If that message has
-    a Spotify link, it will add it to a specified Spotify playlist.
+    a Spotify link, it posts a confirmation prompt in the channel. The user can react with
+    ✅ or ❌ at any time to add or cancel. Pending confirmations are stored in memory.
 
 #== ACKNOWLEDGEMENTS =========================================================
 Discord.py documentation: https://discordpy.readthedocs.io/en/stable/
@@ -71,6 +72,9 @@ class SpotBot(discord.Client):
         self.discord_channel_id  = discord_channel_id
         self.spotify_playlist_id = spotify_playlist_id
 
+        # Store pending confirmations in a dictionary, entry is deleted once confirmation is recieved
+        self.pending = {}
+
         # Spotify OAuth
         auth_manager = SpotifyOAuth(
             client_id=spotify_client_id,
@@ -113,7 +117,6 @@ class SpotBot(discord.Client):
         # Otherwise, if I am in the expected channel run then wait for on_music_recs_message to finish before continuing
         if message.channel.id == self.discord_channel_id:
             await self.on_music_recs_message(message)
-
 
     def on_music_recs_message(self, message):
         """
