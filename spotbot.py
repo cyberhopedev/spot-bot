@@ -128,7 +128,7 @@ class SpotBot(discord.Client):
         Raises:
             ValueError: If the URL is not a recognizable Spotify track URL.
         """
-        pass
+        return self._extract_id_from_url(song_url, "track")
 
     def get_playlist_id_from_url(self, playlist_url):
         """
@@ -144,7 +144,7 @@ class SpotBot(discord.Client):
         Raises:
             ValueError: If the URL is not a recognizable Spotify playlist URL.
         """
-        pass
+        return self._extract_id_from_url(playlist_url, "playlist")
 
     def get_user_id_from_url(self, user_url):
         """
@@ -160,7 +160,7 @@ class SpotBot(discord.Client):
         Raises:
             ValueError: If the URL is not a recognizable Spotify user URL.
         """
-        pass
+        return self._extract_id_from_url(user_url, "user")
 
     def _extract_id_from_url(self, url, resource_type):
         """
