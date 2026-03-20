@@ -33,9 +33,6 @@ SPOTIFY_TRACK_PATTERN = re.compile(r"https://open\.spotify\.com/track/[A-Za-z0-9
 CONFIRM_EMOJI = "✅"
 DENY_EMOJI    = "❌"
 
-# Timeout seconds so the bot wont hang for user to react
-REACTION_TIMEOUT = 60
-
 class SpotBot(discord.Client):
     """
     A Discord bot that reads messages from a specific channel. If that message has
@@ -44,7 +41,6 @@ class SpotBot(discord.Client):
     Inherits from discord.Client, which is the base class for all Discord bots in discord.py. 
     By inheriting it, we get all the connection logic for free and just override the event methods we care about.
     """
-
     def __init__(self, spotify_client_id, spotify_client_secret, spotify_redirect_uri, spotify_playlist_id, discord_token, discord_channel_id):
         """
         Initializes the SpotBot with the necessary credentials and configuration for
@@ -86,6 +82,9 @@ class SpotBot(discord.Client):
         # Create the Spotipy client using the auth manager
         self.sp = spotipy.Spotify(auth_manager=auth_manager)
 
+    # =============================================================================
+    # Discord event handler methods
+    # =============================================================================
     async def on_ready(self):
         """
         Called automatically by discord.py once the bot has finished connecting
@@ -118,6 +117,23 @@ class SpotBot(discord.Client):
         if message.channel.id == self.discord_channel_id:
             await self.on_music_recs_message(message)
 
+    async def on_raw_reaction(self, payload):
+        """
+        Called every time any reaction is added to any message the bot can see.
+        Checks whether the reaction is on a tracked confirmation prompt, from
+        the correct user, and with a valid emoji. If all checks pass, removes
+        the entry from self.pending and either adds the track or cancels.
+
+        Parameter(s):
+            payload (discord.RawReactionActionEvent): Contains message_id,
+                user_id, emoji, channel_id, and guild_id.
+        Returns:
+            None
+        Raises:
+            spotipy.SpotifyException: If the Spotify API call to add the track fails.
+        """
+        pass
+
     def on_music_recs_message(self, message):
         """
         Called when a message is posted in the monitored channel (music-recs).
@@ -139,6 +155,9 @@ class SpotBot(discord.Client):
         """
         pass
 
+    # =============================================================================
+    # Helper methods
+    # =============================================================================
     def add_song_to_playlist(self, song_url):
         """
         Extracts the Spotify track ID from the given URL and appends the track to

@@ -69,6 +69,33 @@ def mock_message():
 
     return message
 
+def make_payload(message_id, user_id, emoji, channel_id=123456789):
+    """
+    Helper that builds a fake discord.RawReactionActionEvent payload.
+
+    on_raw_reaction_add receives a payload object rather than full discord
+    objects, so we need to simulate it in tests.
+
+    Parameter(s):
+        message_id (int): ID of the message that was reacted to.
+        user_id    (int): ID of the user who reacted.
+        emoji      (str): The emoji string, e.g. '✅' or '❌'.
+        channel_id (int): ID of the channel containing the message.
+    Returns:
+        MagicMock: A fake payload with the expected attributes.
+    """
+    payload            = MagicMock()
+    payload.message_id = message_id
+    payload.user_id    = user_id
+    payload.channel_id = channel_id
+
+    # payload.emoji is a PartialEmoji object — str() on it returns the emoji
+    # character. We set the name attribute and make str() return the emoji.
+    payload.emoji      = MagicMock()
+    payload.emoji.__str__ = lambda self: emoji
+
+    return payload
+
 # =============================================================================
 # URL Parsing Tests
 # =============================================================================
