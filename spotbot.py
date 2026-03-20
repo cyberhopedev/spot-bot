@@ -150,8 +150,11 @@ class SpotBot(discord.Client):
             ValueError: If the URL does not contain a valid Spotify track ID.
             spotipy.SpotifyException: If the Spotify API call to add the track fails.
         """
-        pass
+        # Get the track ID from the URL
+        track_id = self.get_song_id_from_url(song_url)
 
+        # Add the track to the target playlist stored in __init__
+        self.sp.playlist_add_items(self.spotify_playlist_id, [track_id])
 
     def get_song_id_from_url(self, song_url):
         """
@@ -221,7 +224,6 @@ class SpotBot(discord.Client):
         parsed_url = urlparse(url)
         tokens = parsed_url.path.strip("/").split("/")
 
-        
         # Check that the path has at least two segments and the first matches the expected type of track/playlist/user/etc.
         if len(tokens) >= 2 and tokens[0] == resource_type:
             return tokens[1]
