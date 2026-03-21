@@ -44,9 +44,46 @@ Discord bot to scan spotify links in a channel and add them to a playlist when t
  
 ---
 
+## Running Locally
+ 
+```bash
+# Clone the repo
+git clone https://github.com/cyberhopedev/spot-bot.git
+cd spot-bot
+ 
+# Install dependencies
+pip install -r requirements.txt
+ 
+# Copy the example env file and fill in your credentials
+cp .env.example .env
+ 
+# Authorize Spotify (first time only)
+python auth.py
+ 
+# Start the bot
+python main.py
+```
+
+---
+
+## Running Tests
+ 
+```bash
+pip install pytest pytest-asyncio
+pytest -v
+```
+
+---
+
 ## Sources
 
 - [discord.py Documentation](https://discordpy.readthedocs.io/en/stable/)
 - [Spotipy Documentation](https://spotipy.readthedocs.io/en/2.26.0/)
 - [Spotify Developer Dashboard](https://developer.spotify.com/)
 - [Discord Developer Portal](https://discord.com/developers/applications)
+
+---
+ 
+## Author
+ 
+**cyberhopedev** — March 2026
