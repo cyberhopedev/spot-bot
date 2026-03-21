@@ -1,6 +1,6 @@
 # spot-bot
 
-Discord bot to scan spotify links in a channel and add them to a playlist when the user utilizes reactions to confirm
+Discord bot to scan spotify links in a channel and add them to a playlist when the user utilizes reactions to confirm, or does not add the song if the user denies the request to add it to the playlist.
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python)
 ![discord.py](https://img.shields.io/badge/discord.py-2.3%2B-5865F2?logo=discord)
@@ -16,7 +16,7 @@ Discord bot to scan spotify links in a channel and add them to a playlist when t
 - Posts a confirmation prompt in the channel mentioning the user
 - Reacts with ✅ / ❌ — user clicks to confirm or cancel
 - Adds the track to your Spotify playlist on confirmation
-- Handles timeouts, API errors, and invalid links
+- Handles pending confirmations, API errors, and invalid links
 
 ---
 
@@ -40,9 +40,39 @@ Discord bot to scan spotify links in a channel and add them to a playlist when t
 3. The bot fetches the track name, artist, and playlist name from Spotify
 4. A confirmation prompt is posted in the channel, mentioning the user
 5. The user reacts with ✅ to add the track or ❌ to cancel
-6. If no reaction is received within 60 seconds, the request expires
-7. The outcome is posted as a follow-up message in the channel
+6. If the user reacts, the outcome is posted as a follow-up message in the channel
  
+---
+
+## Running Locally
+ 
+```bash
+# Clone the repo
+git clone https://github.com/cyberhopedev/spot-bot.git
+cd spot-bot
+ 
+# Install dependencies
+pip install -r requirements.txt
+ 
+# Copy the example env file and fill in your credentials
+cp .env.example .env
+ 
+# Authorize Spotify (first time only)
+python auth.py
+ 
+# Start the bot
+python main.py
+```
+
+---
+
+## Running Tests
+ 
+```bash
+pip install pytest pytest-asyncio
+pytest -v
+```
+
 ---
 
 ## Sources
@@ -51,3 +81,9 @@ Discord bot to scan spotify links in a channel and add them to a playlist when t
 - [Spotipy Documentation](https://spotipy.readthedocs.io/en/2.26.0/)
 - [Spotify Developer Dashboard](https://developer.spotify.com/)
 - [Discord Developer Portal](https://discord.com/developers/applications)
+
+---
+ 
+## Author
+ 
+**cyberhopedev** — March 2026
