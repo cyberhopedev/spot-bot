@@ -82,7 +82,7 @@ def make_payload(message_id, user_id, emoji, channel_id=123456789):
     """
     Helper that builds a fake discord.RawReactionActionEvent payload.
 
-    on_raw_reaction receives a payload object rather than full discord
+    on_raw_reaction_add receives a payload object rather than full discord
     objects, so we need to simulate it in tests.
 
     Parameter(s):
@@ -220,7 +220,7 @@ async def test_non_spotify_message_is_ignored(bot, mock_message):
     mock_message.channel.send.assert_not_called()
 
 # =============================================================================
-# on_raw_reaction Tests
+# on_raw_reaction_add Tests
 # =============================================================================
 def seed_pending(bot, prompt_id=999, channel_id=123456789):
     """
@@ -257,7 +257,7 @@ async def test_confirm_reaction_adds_song_and_notifies_channel(bot, mock_message
 
     payload = make_payload(message_id=999, user_id=111, emoji="✅")
 
-    await bot.on_raw_reaction(payload)
+    await bot.on_raw_reaction_add(payload)
 
     # The Spotify API must have been called to add the track.
     bot.sp.playlist_add_items.assert_called_once_with(
@@ -288,7 +288,7 @@ async def test_deny_reaction_does_not_add_song(bot, mock_message):
 
     payload = make_payload(message_id=999, user_id=111, emoji="❌")
 
-    await bot.on_raw_reaction(payload)
+    await bot.on_raw_reaction_add(payload)
 
     # The Spotify add API must never have been called.
     bot.sp.playlist_add_items.assert_not_called()
@@ -313,7 +313,7 @@ async def test_bot_own_reaction_is_ignored(bot):
     payload = make_payload(message_id=999, user_id=BOT_USER_ID, emoji="✅")
     bot.get_channel = MagicMock()
 
-    await bot.on_raw_reaction(payload)
+    await bot.on_raw_reaction_add(payload)
 
     # The pending entry should still be there — bot reactions are ignored.
     assert 999 in bot.pending
@@ -330,7 +330,7 @@ async def test_unknown_emoji_is_ignored(bot):
     payload = make_payload(message_id=999, user_id=111, emoji="🎵")
     bot.get_channel = MagicMock()
 
-    await bot.on_raw_reaction(payload)
+    await bot.on_raw_reaction_add(payload)
 
     # Entry should still be in pending, unrecognised emoji is ignored.
     assert 999 in bot.pending
@@ -351,7 +351,7 @@ async def test_reaction_from_any_user_is_accepted(bot):
     # React as a different user (222), should still be accepted.
     payload = make_payload(message_id=999, user_id=222, emoji="✅")
 
-    await bot.on_raw_reaction(payload)
+    await bot.on_raw_reaction_add(payload)
 
     # Track should have been added even though user 222 didn't post the link.
     bot.sp.playlist_add_items.assert_called_once_with(
@@ -376,11 +376,11 @@ async def test_confirm_reaction_cannot_fire_twice(bot):
     payload = make_payload(message_id=999, user_id=111, emoji="✅")
 
     # First reaction, should add the track.
-    await bot.on_raw_reaction(payload)
+    await bot.on_raw_reaction_add(payload)
     assert bot.sp.playlist_add_items.call_count == 1
 
     # Second reaction on the same message, should be ignored entirely.
-    await bot.on_raw_reaction(payload)
+    await bot.on_raw_reaction_add(payload)
     assert bot.sp.playlist_add_items.call_count == 1  # still 1, not 2
 
 @pytest.mark.asyncio
@@ -395,7 +395,7 @@ async def test_reaction_on_untracked_message_is_ignored(bot):
     payload = make_payload(message_id=000, user_id=111, emoji="✅")
     bot.get_channel = MagicMock()
 
-    await bot.on_raw_reaction(payload)
+    await bot.on_raw_reaction_add(payload)
 
     # The channel should never have been fetched or messaged.
     bot.get_channel.assert_not_called()
@@ -443,7 +443,7 @@ async def test_spotify_api_error_on_confirm_sends_error(bot):
 
     payload = make_payload(message_id=999, user_id=111, emoji="✅")
 
-    await bot.on_raw_reaction(payload)
+    await bot.on_raw_reaction_add(payload)
 
     # An error message should have been sent to the channel.
     channel.send.assert_called_once()

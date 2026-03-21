@@ -117,7 +117,7 @@ class SpotBot(discord.Client):
         if message.channel.id == self.discord_channel_id:
             await self.on_music_recs_message(message)
 
-    async def on_raw_reaction(self, payload):
+    async def on_raw_reaction_add(self, payload):
         """
         Called every time any reaction is added to any message the bot can see.
         Checks whether the reaction is on a tracked confirmation prompt, from
@@ -132,6 +132,7 @@ class SpotBot(discord.Client):
         Raises:
             spotipy.SpotifyException: If the Spotify API call to add the track fails.
         """
+        print(f"Reaction received: {payload.message_id}, emoji: {payload.emoji}, user: {payload.user_id}") # Debug print statement
         # Lookup tracks that are pending confirmation, if not stop here
         if payload.message_id not in self.pending:
             return
@@ -200,7 +201,7 @@ class SpotBot(discord.Client):
         
         # Get the full text that matched the pattern, AKA complete Spotify track URL, then get just the track ID
         song_url = match.group(0)
-        track_id = self.get_song_id_from_url
+        track_id = self.get_song_id_from_url(song_url)
 
         # Fetch the track and playlist info from Spotify
         try:
@@ -242,6 +243,7 @@ class SpotBot(discord.Client):
             "author_id":     message.author.id,
             "channel_id":    message.channel.id,
         }
+        print(f"Pending confirmations: {self.pending}") # Debug printing statement
 
     # =============================================================================
     # Helper methods
