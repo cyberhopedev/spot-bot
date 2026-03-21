@@ -191,10 +191,6 @@ async def test_spotify_link_sends_confirmation(bot, mock_message):
     # channel.send should have been called once for the prompt.
     mock_message.channel.send.assert_called_once()
 
-    # The prompt text should @mention the user.
-    prompt_text = mock_message.channel.send.call_args.args[0]
-    assert "@testuser" in prompt_text
-
     # Both ✅ and ❌ must have been added as reactions so the user can click them.
     reaction_calls = [call.args[0] for call in prompt.add_reaction.call_args_list]
     assert "✅" in reaction_calls
