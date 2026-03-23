@@ -89,9 +89,9 @@ class SpotBot(discord.Client):
         if refresh_token:
             token_info = auth_manager.refresh_access_token(refresh_token)
             self.sp = spotipy.Spotify(auth=token_info["access_token"])
-        else:
-            # Fallback for local development — uses .cache file as normal
-            self.sp = spotipy.Spotify(auth_manager=auth_manager)
+    
+        # Fallback for local development, uses .cache file as normal
+        self.sp = spotipy.Spotify(auth_manager=auth_manager)
 
     # =============================================================================
     # Discord event handler methods
