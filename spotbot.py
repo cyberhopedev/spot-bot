@@ -238,7 +238,7 @@ class SpotBot(discord.Client):
         # Post the confirmation prompt in the channel
         prompt = await message.channel.send(
             f'Want to add **{track_name}** — {artist_names} to **{playlist_name}**?\n\n'
-            f'React with {CONFIRM_EMOJI} to add it, or {DENY_EMOJI} to cancelc'
+            f'React with {CONFIRM_EMOJI} to add it, or {DENY_EMOJI} to cancel.'
         )
         # Pre-add reactions
         await prompt.add_reaction(CONFIRM_EMOJI)
