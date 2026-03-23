@@ -16,6 +16,7 @@ PyTest documentation: https://pypi.org/project/pytest/
 #=============================================================================
 
 """
+import os
 import re
 from urllib.parse import urlparse
 import spotipy
@@ -77,10 +78,20 @@ class SpotBot(discord.Client):
             client_secret=spotify_client_secret,
             redirect_uri=spotify_redirect_uri,
             scope="playlist-modify-public playlist-modify-private",
+            open_browser=False
         )
 
         # Create the Spotipy client using the auth manager
-        self.sp = spotipy.Spotify(auth_manager=auth_manager)
+        # On Railway there is no browser and no .cache file.
+        # Inject the refresh token directly so Spotipy can get a valid
+        # access token without ever opening a local server.
+        refresh_token = os.getenv("SPOTIFY_REFRESH_TOKEN")
+        if refresh_token:
+            token_info = auth_manager.refresh_access_token(refresh_token)
+            self.sp = spotipy.Spotify(auth=token_info["access_token"])
+        else:
+            # Fallback for local development — uses .cache file as normal
+            self.sp = spotipy.Spotify(auth_manager=auth_manager)
 
     # =============================================================================
     # Discord event handler methods
@@ -227,7 +238,7 @@ class SpotBot(discord.Client):
         # Post the confirmation prompt in the channel
         prompt = await message.channel.send(
             f'Want to add **{track_name}** — {artist_names} to **{playlist_name}**?\n\n'
-            f'React with {CONFIRM_EMOJI} to add it, or {DENY_EMOJI} to cancel'
+            f'React with {CONFIRM_EMOJI} to add it, or {DENY_EMOJI} to cancelc'
         )
         # Pre-add reactions
         await prompt.add_reaction(CONFIRM_EMOJI)
